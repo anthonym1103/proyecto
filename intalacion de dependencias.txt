@@ -2,6 +2,7 @@ Ejecutar estos comandos desde (CMD) dentro de la ruta de los archivos
 
 Activar el entorno virtual 
 .venv\Scripts\Activate.bat
+.venv\Scripts\Activate.ps1 (si se usa la terminal de visual studio)
 
 instalar dependencias para fastapi 
 pip install "fastapi[standard]"

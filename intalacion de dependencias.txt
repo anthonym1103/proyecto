@@ -1,0 +1,10 @@
+Ejecutar estos comandos desde (CMD) dentro de la ruta de los archivos
+
+Activar el entorno virtual 
+.venv\Scripts\Activate.bat
+
+instalar dependencias para fastapi 
+pip install "fastapi[standard]"
+
+Ejecutar el servidor
+uvicorn main:app --reload

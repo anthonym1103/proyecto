@@ -24,3 +24,32 @@ class UsuarioEmpresa(BaseModel):
     sector: str
     personacontacto: str
     idsucursal: int
+
+class UsuarioCandidato(BaseModel):
+    cedula: int
+    nombre: str
+    apellido: str
+    tlf: str
+    edad: str
+    sexo: str
+    universidad_egreso: str
+    idsucursal: int
+
+class ProfesionCandidato(BaseModel):
+    id: int
+    nombre: str
+    descripcion: str
+
+class ExperienciaLaboral(BaseModel):
+    id: int
+    empresa: str
+    fecha_inicio: str
+    fecha_finalizacion: str
+    cargo: str
+
+
+class CandidatoPostulacion(BaseModel):
+    id: int
+    cedcandidato: int
+    idpostulacion: int
+    fecha: str

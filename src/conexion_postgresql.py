@@ -18,11 +18,6 @@ def insertarDataSucursal(nombre:str, descripcion:str):
     cursor.execute(query)
     cursor.close()
 
-def insertarDataUserCandidato(cedula: int, nombre: str, apellido: str, telf: str, edad: int, sexo: str, univEgreso: str, profesion: str, idsucursal: int):
-    cursor = connection.cursor()
-    query = f"""INSERT INTO usuariocandidato(cedula, nombre, apellido, telf, edad, sexo, universidad_egreso, profesion, idsucursal) values ({cedula},'{nombre}','{apellido}','{telf}',{edad},'{sexo}','{univEgreso}','{profesion}',{idsucursal})"""
-    cursor.execute(query)
-    cursor.close()
 
 def insertarDataUserHG(nombre: str, fecha_apertura: str, idsucursal: int):
     cursor = connection.cursor()
@@ -30,11 +25,6 @@ def insertarDataUserHG(nombre: str, fecha_apertura: str, idsucursal: int):
     cursor.execute(query)
     cursor.close()
     
-def insertarDataOferta(sucursal:int, profesion:str, cargo:str, descripcion:str, salario:float):
-    cursor = connection.cursor()
-    query = f"""INSERT INTO ofertalaboral(idsucursal, profesion, cargo_vacante, descripcion_cargo, salario) values({sucursal},'{profesion}','{cargo}','{descripcion}', {salario}) """
-    cursor.execute(query)
-    cursor.close()
     
 def insertarDataPostulacion(oferta:int, salario:float, tipoSangre:str, personaContacto:str, telf:str, nroCuenta:str, tiempoContratacion:str):
     cursor = connection.cursor()
@@ -46,13 +36,13 @@ def searchOfertaLaboral(case: int, valor: str):
     cursor = connection.cursor()
     cursor.execute(f"SELECT * FROM ofertalaboral")
     rows = cursor.fetchall()
-    if(case == 1):
-        idOferta = int(valor)  
-        for row in rows:
+    # CASO 1 BUSCA LAS OFERTAS POR LA ID, CASO 2 BUSCA LAS OFERTAS POR EL CARGO 
+    for row in rows:
+        if(case == 1):
+            idOferta = int(valor)  
             if(row[0]==idOferta):
                 return True
-    elif(case == 2):
-        for row in rows:
+        elif(case == 2):
             if(row[3]==valor):
                 return True
     return False
@@ -64,6 +54,35 @@ def isEmpresaInBD(rif: str):
     for row in rows:
         if(row[2] == rif):
             return True
+    return False
+
+def searchProfesionExperiencia(valor: str, nomTable: str, case:int = 0):
+    cursor= connection.cursor()
+    cursor.execute(f"SELECT * FROM {nomTable}")
+    rows = cursor.fetchall()
+    for row in rows:
+        if(nomTable == "profesion"):
+            # CASO 1 BUSCA LAS PROFECIONES POR LA NOMBRE, CASO 2 BUSCA LAS PROFESIONES POR EL ID 
+            if(case == 1):
+                if(row[1] == valor):
+                    return True
+            elif(case == 2):
+                id = int(valor)
+                if(row[0] == id):
+                    return True
+                
+        elif(nomTable == "experiencialaboral" and nomTable == "usuariocandidato"):
+            # BUSCA EN LA TABLA DE EXPERIENCIAS LABORALES POR ID
+            valorFinal = int(valor)
+            if(row[0] == valorFinal):
+                return True
+            
+        else:
+            #BUSCA EN LA TABLA DE CANDIDATO POSTULACION POR CEDULA DEL CANDIDATO
+            cedula = int(valor)
+            if(row[1] == cedula):
+                return True
+    
     return False
 
 ##################ACCIONES DEL USUARIO DE HIRING GROUP###########################
@@ -122,13 +141,15 @@ def updateOferta(case: int, idOferta: int, campo:str="", valor:str=""):
         query = f"""UPDATE ofertalaboral SET status = false WHERE id = {idOferta}"""
     elif(case == 2):
         if(campo == "idsucursal" or campo == "status" or campo == "salario"):
-            valorFinal = 0
-            if(campo == "salario"):
+            if(campo == "status"):
+                valorFinal = "false" if not valor else "true"
+            elif(campo == "salario"):
                 valorFinal = float(valor)
-            valorFinal = int(valor)
+            else:
+                valorFinal = int(valor)
             query = f"""UPDATE ofertalaboral SET {campo} = {valorFinal} WHERE id = {idOferta}"""
         else:
-            query = f"""UPDATE ofertalaboral SET {campo} = '{valor}' WHERE id = {idOferta}"""
+            query = f"""UPDATE ofertalaboral SET {campo} = {valor} WHERE id = {idOferta}"""
         cursor.execute(query)
         cursor.close()
         return True
@@ -147,7 +168,116 @@ def setOfertLaboral(idSucursal:int, profesion:str, cargoVacante:str, descripcion
     query = f"""INSERT INTO ofertalaboral(idsucursal, profesion, cargo_vacante, descripcion_cargo, salario) VALUES({idSucursal},'{profesion}','{cargoVacante}','{descripcionCargo}',{salario})"""
     cursor.execute(query)
     cursor.close()
+    return True
 
 
-
+def deleteOfertLaboral(id: int):
+    #AGREGAR QUERY PARA QUE SE REINICIE EL CONTEO DEL ID 
+    if(searchOfertaLaboral(1, id) is False):
+        return False
+    cursor = connection.cursor()
+    query = f"""DELETE FROM ofertalaboral WHERE id = {id}"""
+    ofertaBuscada = getOfertasLaborales(3, id)
+    cursor.execute(query)
+    cursor.close()
+    return ofertaBuscada
 ##################ACCIONES DE EMPRESA###########################
+
+
+
+##################ACCIONES DEL USUARIO CANDIDATO###########################
+
+
+def setDataUserCandidato(cedula: int, nombre: str, apellido: str, tlf: str, edad: int, sexo: str, uniEgreso: str, idsucursal: int):
+    if(searchProfesionExperiencia(cedula,"usuariocandidato") is False):
+        return False
+    
+    cursor = connection.cursor()
+    query = f"""INSERT INTO usuariocandidato(cedula, nombre, apellido, telf, edad, sexo, universidad_egreso, idsucursal) VALUES({cedula},'{nombre}','{apellido}', '{tlf}', '{edad}', '{sexo}', '{uniEgreso}', {idsucursal}"""
+    cursor.execute(query)
+    cursor.close()
+    return True
+
+def getFechaPostulacion(cedula: int):
+    if(searchProfesionExperiencia(cedula,"candidatopostulacion") is False):
+        return False
+    
+    listFechaPostulaciones = []
+    cursor = connection.cursor()
+    query = f"""SELECT * FROM candidatopostulacion WHERE cedcandidato = {cedula}"""
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    colNames = [desc[0] for desc in cursor.description]
+    for row in rows:
+        listFechaPostulaciones.append(dict(zip(colNames, row)))
+    cursor.close()
+    return listFechaPostulaciones
+
+
+def getProfesionExperiencia(case: int):
+    listData = []
+    cursor = connection.cursor()
+    if(case == 1):
+        query= f"""SELECT * FROM profesion"""
+    else:
+        query= f"""SELECT * FROM experiencialaboral"""
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    colNames = [desc[0] for desc in cursor.description]
+    for row in rows:
+        listData.append(dict(zip(colNames, row)))
+    cursor.close()
+    return listData
+
+def setProfesion(nombre:str, descripcion:str):
+    if(searchProfesionExperiencia(nombre, "profesion", 2) is False):
+        return False
+    cursor = connection.cursor()
+    query = f"""INSERT INTO profesion(nombre, descripcion) VALUES('{nombre}', '{descripcion}')"""
+    cursor.execute(query)
+    cursor.close()
+    return True
+
+def profesionExperienciaDelete(id: int, case: int):
+    #AGREGAR QUERY PARA QUE SE REINICIE EL CONTEO DEL ID 
+    if(case == 1):
+        if(searchProfesionExperiencia(id, "profesion", 2) is False):
+            return False
+        cursor = connection.cursor()
+        query = f"""DELETE FROM profesion WHERE id = {id}"""
+    else:
+        if(searchProfesionExperiencia(id, "experiencialaboral") is False):
+            return False
+        cursor = connection.cursor()
+        query = f"""DELETE FROM experiencialaboral WHERE id = {id}"""
+
+    experienciaBuscada = getOfertasLaborales(3, id)
+    cursor.execute(query)
+    cursor.close()
+    return experienciaBuscada
+
+def updateProfesionExperiencia(case: int,idprofesion: int, campo:str="", valor:str=""):
+    if(case == 1):
+        if(searchProfesionExperiencia(idprofesion, "profesion", 2) is False):
+            return False 
+        cursor = connection.cursor()
+        query = f"""UPDATE profesion SET {campo} = {valor} WHERE id = {idprofesion}"""
+    else:
+        if(searchProfesionExperiencia(idprofesion, "experiencialaboral") is False):
+            return False 
+        cursor = connection.cursor()
+        query = f"""UPDATE experiencialaboral SET {campo} = {valor} WHERE id = {idprofesion}"""
+    cursor.execute(query)
+    cursor.close()
+    return True
+    
+
+def setExperiencia(empresa: str, fechaInicio: str, fechaFinal: str, cargo: str):
+    cursor = connection.cursor()
+    query = f"""INSERT INTO experiencialaboral(empresa, facha_inicio, fecha_finalizacion, cargo) VALUES('{empresa}', '{fechaInicio}','{fechaFinal}', '{cargo}')"""
+    cursor.execute(query)
+    cursor.close()
+    return True
+
+
+##################ACCIONES DEL USUARIO CANDIDATO###########################

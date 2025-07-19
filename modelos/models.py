@@ -29,8 +29,8 @@ class UsuarioCandidato(BaseModel):
     cedula: int
     nombre: str
     apellido: str
-    tlf: str
-    edad: str
+    telf: str
+    edad: int
     sexo: str
     universidad_egreso: str
     idsucursal: int

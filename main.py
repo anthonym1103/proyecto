@@ -94,7 +94,7 @@ async def getProfesiones():
 @app.post("/userCandidato/createProfesion", response_model = ProfesionCandidato)
 async def createProfesion(dataProfesion: ProfesionCandidato):
     newDataProfesion = dataProfesion.model_dump()
-    if(setProfesion(newDataProfesion["nombre"], newDataProfesion["descripcion"], 1)):
+    if(setProfesion(newDataProfesion["nombre"], newDataProfesion["descripcion"])):
         raise HTTPException(status_code = 404, detail = "La profesion ingresada ya existe")
     return newDataProfesion
 
@@ -133,12 +133,11 @@ async def deleteExperiencia(id: int):
     return response
 
 @app.put("/userCandidato/updateExperiencia/{id}", response_model = ExperienciaLaboral)
-async def actualzProfesion(id: int, dataExperiencia:ExperienciaLaboral):
+async def actualzExperiencia(id: int, dataExperiencia:ExperienciaLaboral):
     newExperiencia = dataExperiencia.model_dump()
     for campo in newExperiencia:
         if(newExperiencia[campo] != "" and campo != "id"):
             response = updateProfesionExperiencia(2, id, campo, newExperiencia[campo])
-            response = False
             if(response is False):
                 raise HTTPException(status_code = 404, detail = "La profesion a actualizar no existe")
     return newExperiencia

@@ -24,6 +24,8 @@ class UsuarioEmpresa(BaseModel):
     sector: str
     personacontacto: str
     idsucursal: int
+    correo: str
+    contrasenia: str
 
 class UsuarioCandidato(BaseModel):
     cedula: int
@@ -34,6 +36,8 @@ class UsuarioCandidato(BaseModel):
     sexo: str
     universidad_egreso: str
     idsucursal: int
+    correo: str
+    contrasenia: str
 
 class ProfesionCandidato(BaseModel):
     id: int

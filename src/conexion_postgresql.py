@@ -138,11 +138,11 @@ def getOfertasLaborales(case: int, area:str=""):
     cursor.close()
     return listOfertas
 
-def setUserEmpresa(nombre:str, rif:str, telf:str, sector:str, personcontact:str, idsucursal:int):
+def setUserEmpresa(nombre:str, rif:str, telf:str, sector:str, personcontact:str, idsucursal:int, correo: str,  contrasenia: str):
     if(isEmpresaInBD(rif) is True):
       return True 
     cursor = connection.cursor()
-    query = f"""INSERT INTO usuarioempresa(nombre, rif, telf, sector, personacontacto, idsucursal) values('{nombre}','{rif}','{telf}','{sector}','{personcontact}',{idsucursal}) """
+    query = f"""INSERT INTO usuarioempresa(nombre, rif, telf, sector, personacontacto, idsucursal, correo, contrasenia) values('{nombre}','{rif}','{telf}','{sector}','{personcontact}',{idsucursal}, '{correo}', '{contrasenia}') """
     cursor.execute(query)
     cursor.close()
     return False
@@ -203,12 +203,12 @@ def deleteOfertLaboral(id: int):
 ##################ACCIONES DEL USUARIO CANDIDATO###########################
 
 
-def setDataUserCandidato(cedula: int, nombre: str, apellido: str, tlf: str, edad: int, sexo: str, uniEgreso: str, idsucursal: int):
+def setDataUserCandidato(cedula: int, nombre: str, apellido: str, tlf: str, edad: int, sexo: str, uniEgreso: str, idsucursal: int, correo: str, contrasenia: int):
     if(searchProfesionExperiencia(cedula,"usuariocandidato") is True):
         return True
     
     cursor = connection.cursor()
-    query = f"""INSERT INTO usuariocandidato(cedula, nombre, apellido, telf, edad, sexo, universidad_egreso, idsucursal) VALUES({cedula},'{nombre}','{apellido}', '{tlf}', {edad}, '{sexo}', '{uniEgreso}', {idsucursal})"""
+    query = f"""INSERT INTO usuariocandidato(cedula, nombre, apellido, telf, edad, sexo, universidad_egreso, idsucursal, correo, contrasenia) VALUES({cedula},'{nombre}','{apellido}', '{tlf}', {edad}, '{sexo}', '{uniEgreso}', {idsucursal}, '{correo}', '{contrasenia}')"""
     cursor.execute(query)
     cursor.close()
     return False

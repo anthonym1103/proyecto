@@ -1,8 +1,21 @@
 from fastapi import FastAPI, HTTPException
 from src.conexion_postgresql import getPostulacion, getOfertasLaborales, setUserEmpresa, updateOferta, setOfertLaboral, deleteOfertLaboral, setProfesion, profesionExperienciaDelete, updateProfesionExperiencia, setExperiencia, getProfesionExperiencia, setDataUserCandidato, getFechaPostulacion
 from modelos.models import Postulacion, OfertaLaboral,UsuarioEmpresa, ProfesionCandidato, ExperienciaLaboral, UsuarioCandidato, CandidatoPostulacion
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins =[
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins = origins,
+    allow_methods = ["*"],
+    allow_headers = ["*"]
+)
+
 ##################ACCIONES DEL USUARIO DE HIRING GROUP###########################
 @app.get("/userHG/postulaciones", response_model = list[Postulacion])
 async def postulacion():
@@ -22,7 +35,7 @@ async def ofertLaborals(area: str):
 @app.post("/userHG/createuserempresa", response_model = UsuarioEmpresa)
 async def createUserEmpresa(dataEmpresa: UsuarioEmpresa):
     newEmpresa = dataEmpresa.model_dump()
-    if(setUserEmpresa(newEmpresa["nombre"], newEmpresa["rif"], newEmpresa["tlf"], newEmpresa["sector"], newEmpresa["personacontacto"], newEmpresa["idsucursal"])):
+    if(setUserEmpresa(newEmpresa["nombre"], newEmpresa["rif"], newEmpresa["tlf"], newEmpresa["sector"], newEmpresa["personacontacto"], newEmpresa["idsucursal"], newEmpresa["correo"], newEmpresa["contrasenia"])):
         raise HTTPException(status_code = 404, detail = "La empresa ingresada ya existe")
     return newEmpresa
 
@@ -76,7 +89,7 @@ async def deleteOfert(id: int):
 @app.post("/userCandidato/createUser", response_model = UsuarioCandidato)
 async def createUser(dataCandidato: UsuarioCandidato):
     newDataCandidato = dataCandidato.model_dump()
-    if(setDataUserCandidato(newDataCandidato["cedula"],newDataCandidato["nombre"], newDataCandidato["apellido"], newDataCandidato["telf"], newDataCandidato["edad"], newDataCandidato["sexo"], newDataCandidato["universidad_egreso"], newDataCandidato["idsucursal"])):
+    if(setDataUserCandidato(newDataCandidato["cedula"],newDataCandidato["nombre"], newDataCandidato["apellido"], newDataCandidato["telf"], newDataCandidato["edad"], newDataCandidato["sexo"], newDataCandidato["universidad_egreso"], newDataCandidato["idsucursal"], newDataCandidato["correo"], newDataCandidato["contrasenia"])):
         raise HTTPException(status_code = 404, detail = "El usuario ingresado ya existe")
     return newDataCandidato
 

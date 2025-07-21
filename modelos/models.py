@@ -1,5 +1,11 @@
 from pydantic import BaseModel
 
+
+class LoginRequest(BaseModel):
+    correo: str
+    contrasenia: str
+
+
 class Postulacion(BaseModel):
     nombre: str
     idoferta: int
@@ -20,7 +26,7 @@ class UsuarioEmpresa(BaseModel):
     id: int
     nombre: str
     rif:str
-    tlf: str
+    telf: str
     sector: str
     personacontacto: str
     idsucursal: int
@@ -53,7 +59,11 @@ class ExperienciaLaboral(BaseModel):
 
 
 class CandidatoPostulacion(BaseModel):
-    id: int
+    id: int 
     cedcandidato: int
     idpostulacion: int
     fecha: str
+    idoferta: int
+    salario: float
+    telf:str
+    tiempo_contratacion: str

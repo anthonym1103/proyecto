@@ -12,6 +12,25 @@ try:
 except Exception as ex:
     print(ex)
 
+
+def verify_user(correo: str, contrasenia: str, table_name: str):
+    # Consulta SQL para cada tabla (ejemplo con asyncpg)
+    cursor = connection.cursor()
+    print(table_name)
+    query = f"""SELECT * FROM {table_name} WHERE correo = '{correo}' AND contrasenia = '{contrasenia}'"""
+    cursor.execute(query)
+    row = cursor.fetchone()
+    colNames = [desc[0] for desc in cursor.description]
+    print(f"esta es la fila{row} y esta la columna {colNames}")
+    if(row):
+        usuarioBuscado = dict(zip(colNames, row))
+        return usuarioBuscado
+    
+    cursor.close()
+    return None
+    
+
+
 def insertarDataSucursal(nombre:str, descripcion:str):
     cursor = connection.cursor()
     query = f"""INSERT INTO sucursal(nombresucursal, descripcionsucursal) values('{nombre}','{descripcion}') """
@@ -129,6 +148,9 @@ def getOfertasLaborales(case: int, area:str=""):
         ofertaBuscada = dict(zip(colNames, row))
         cursor.close()
         return ofertaBuscada
+    else: 
+        query = f"SELECT * FROM ofertalaboral WHERE status = true"
+
 
     cursor.execute(query)
     rows = cursor.fetchall()
@@ -148,7 +170,7 @@ def setUserEmpresa(nombre:str, rif:str, telf:str, sector:str, personcontact:str,
     return False
 
 
-def updateOferta(case: int, idOferta: int, campo:str="", valor:str=""):
+def updateOferta(case: int, idOferta: int, valor:str="", campo:str=""):
     if(searchOfertaLaboral(1,idOferta) is False):
       return False 
     cursor = connection.cursor()
@@ -168,6 +190,14 @@ def updateOferta(case: int, idOferta: int, campo:str="", valor:str=""):
         cursor.execute(query)
         cursor.close()
         return True
+    elif(case==3):
+        valorFinal = "true" if not valor else "false"
+        if(valorFinal == valor):
+            if(valorFinal == "true"):
+                valorFinal = "false"
+            else:
+                valorFinal = "true"  
+        query = f"""UPDATE ofertalaboral SET status = {valorFinal} WHERE id = {idOferta}"""
 
     cursor.execute(query)
     cursor.close()
@@ -220,7 +250,7 @@ def getFechaPostulacion(cedula: int):
     
     listFechaPostulaciones = []
     cursor = connection.cursor()
-    query = f"""SELECT * FROM candidatopostulacion WHERE cedcandidato = {cedula}"""
+    query = f"""SELECT candidatopostulacion.id, candidatopostulacion.cedcandidato,candidatopostulacion.idpostulacion, candidatopostulacion.fecha, postulacion.idoferta, postulacion.salario, postulacion.telf, postulacion.tiempo_contratacion FROM candidatopostulacion INNER JOIN postulacion ON candidatopostulacion.idpostulacion = postulacion.id  WHERE cedcandidato = {cedula} ORDER BY fecha ASC"""
     cursor.execute(query)
     rows = cursor.fetchall()
     colNames = [desc[0] for desc in cursor.description]

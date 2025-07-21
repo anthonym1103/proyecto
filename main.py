@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from src.conexion_postgresql import getPostulacion, getOfertasLaborales, setUserEmpresa, updateOferta, setOfertLaboral, deleteOfertLaboral, setProfesion, profesionExperienciaDelete, updateProfesionExperiencia, setExperiencia, getProfesionExperiencia, setDataUserCandidato, getFechaPostulacion
-from modelos.models import Postulacion, OfertaLaboral,UsuarioEmpresa, ProfesionCandidato, ExperienciaLaboral, UsuarioCandidato, CandidatoPostulacion
 from fastapi.middleware.cors import CORSMiddleware
+from src.conexion_postgresql import getPostulacion, getOfertasLaborales, setUserEmpresa, updateOferta, setOfertLaboral, deleteOfertLaboral, setProfesion, profesionExperienciaDelete, updateProfesionExperiencia, setExperiencia, getProfesionExperiencia, setDataUserCandidato, getFechaPostulacion,verify_user
+from modelos.models import Postulacion, OfertaLaboral,UsuarioEmpresa, ProfesionCandidato, ExperienciaLaboral, UsuarioCandidato, CandidatoPostulacion, LoginRequest
+
 
 app = FastAPI()
 
@@ -12,9 +13,35 @@ origins =[
 app.add_middleware(
     CORSMiddleware,
     allow_origins = origins,
+    allow_credentials=True,
     allow_methods = ["*"],
     allow_headers = ["*"]
 )
+
+##################ACCIONES DEL LOGIN###########################
+
+@app.post("/auth/login")
+async def login(credentials: LoginRequest):
+    # Verificar en todas las tablas
+    user_types = ["usuariohg", "usuarioempresa", "usuariocandidato"]
+    
+    for user_type in user_types:
+        user = verify_user(credentials.correo, credentials.contrasenia, user_type)
+        if user:
+            return {
+                "authenticated": True,
+                "user_type": user_type,
+                "user_data": user  # Datos adicionales si necesarios
+            }
+    
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+
+
+
+##################ACCIONES DEL LOGIN###########################
+
+
 
 ##################ACCIONES DEL USUARIO DE HIRING GROUP###########################
 @app.get("/userHG/postulaciones", response_model = list[Postulacion])
@@ -35,7 +62,8 @@ async def ofertLaborals(area: str):
 @app.post("/userHG/createuserempresa", response_model = UsuarioEmpresa)
 async def createUserEmpresa(dataEmpresa: UsuarioEmpresa):
     newEmpresa = dataEmpresa.model_dump()
-    if(setUserEmpresa(newEmpresa["nombre"], newEmpresa["rif"], newEmpresa["tlf"], newEmpresa["sector"], newEmpresa["personacontacto"], newEmpresa["idsucursal"], newEmpresa["correo"], newEmpresa["contrasenia"])):
+    print(newEmpresa)
+    if(setUserEmpresa(newEmpresa["nombre"], newEmpresa["rif"], newEmpresa["telf"], newEmpresa["sector"], newEmpresa["personacontacto"], newEmpresa["idsucursal"], newEmpresa["correo"], newEmpresa["contrasenia"])):
         raise HTTPException(status_code = 404, detail = "La empresa ingresada ya existe")
     return newEmpresa
 
@@ -54,6 +82,10 @@ async def actualzOferta(id: int):
 async def ofertsLaborales():
     return(getOfertasLaborales(1))
 
+@app.get("/userEmpresa/ofertaslaborales/{id}", response_model = OfertaLaboral)
+async def ofertsLaborales(id: int):
+    return(getOfertasLaborales(3, id))
+
 @app.post("/userEmpresa/createOfertaLaboral", response_model = OfertaLaboral)
 async def createOfertLaboral(dataOferta: OfertaLaboral):
     newOfertaLaboral = dataOferta.model_dump()
@@ -67,10 +99,17 @@ async def actualzOferta(id: int, dataOferta:OfertaLaboral):
     for campo in newOferta:
         if(newOferta[campo] != ""):
             if((type(newOferta[campo]) is int and newOferta[campo] != 0) or type(newOferta[campo]) is bool):
-                response = updateOferta(2, id, campo, newOferta[campo])
+                response = updateOferta(2, id, newOferta[campo], campo)
                 if(response is False):
                     raise HTTPException(status_code = 404, detail = "La oferta a actualizar no existe")
     return newOferta
+
+@app.put("/userEmpresa/updateOferta/{id}/{valor}", response_model = OfertaLaboral)
+async def actualzStatusOferta(id: int, valor: str):
+    response = updateOferta(3, id, valor)
+    if(response is False):
+        raise HTTPException(status_code = 404, detail = "La oferta a actualizar no existe")
+    return response
 
 
 @app.delete("/userEmpresa/deleteOferta/{id}", response_model = OfertaLaboral)
@@ -86,6 +125,12 @@ async def deleteOfert(id: int):
 
 ##################ACCIONES DE USUARIO CANDIDATO###########################
 
+
+@app.get("/userCandidato/ofertaslaborales", response_model = list[OfertaLaboral])
+async def ofertsLaborales():
+    return(getOfertasLaborales(4))
+
+
 @app.post("/userCandidato/createUser", response_model = UsuarioCandidato)
 async def createUser(dataCandidato: UsuarioCandidato):
     newDataCandidato = dataCandidato.model_dump()
@@ -99,6 +144,8 @@ async def getPostulaciones(cedula: int):
     if(response is False):
         raise HTTPException(status_code = 404, detail = "Este usuario no ha hecho ninguna postulacion")
     return response
+
+
 
 @app.get("/userCandidato/getProfesiones", response_model= list[ProfesionCandidato])
 async def getProfesiones():
